@@ -71,23 +71,71 @@ const InterpretView = ({ onFaceToFace }: { onFaceToFace: () => void }) => {
     }
   }, [messages]);
 
-  const handleMicClick = async () => {
-    setIsListening(true);
-    // Simulate speech recognition and translation
-    setTimeout(async () => {
-      const text = "你好，很高兴见到你。";
-      const translation = await translateText(text, "Chinese", "Bislama");
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text,
-        translation,
-        fromLang: 'Chinese',
-        toLang: 'Bislama',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, newMessage]);
+  const [currentSpeech, setCurrentSpeech] = useState('');
+  const recognitionRef = useRef<any>(null);
+
+  const handleMicClick = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       setIsListening(false);
-    }, 2000);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support Speech Recognition. Please try Chrome on Android or Desktop.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'zh-CN'; // Defaulting to Chinese for now
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setCurrentSpeech('');
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result: any) => result.transcript)
+        .join('');
+      setCurrentSpeech(transcript);
+    };
+
+    recognition.onend = async () => {
+      setIsListening(false);
+      if (currentSpeech.trim()) {
+        const textToTranslate = currentSpeech;
+        try {
+          const translation = await translateText(textToTranslate, "Chinese", "Bislama");
+          const newMessage: Message = {
+            id: Date.now().toString(),
+            text: textToTranslate,
+            translation,
+            fromLang: 'Chinese',
+            toLang: 'Bislama',
+            timestamp: Date.now()
+          };
+          setMessages(prev => [...prev, newMessage]);
+        } catch (error) {
+          console.error("Translation failed:", error);
+        }
+      }
+      setCurrentSpeech('');
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   };
 
   return (
@@ -145,7 +193,15 @@ const InterpretView = ({ onFaceToFace }: { onFaceToFace: () => void }) => {
             </div>
           </div>
         ))}
-        {isListening && (
+        {isListening && currentSpeech && (
+          <div className="flex flex-col items-start opacity-70">
+            <span className="text-[10px] font-bold text-slate-400 uppercase ml-2 mb-1">Chinese (Recognizing...)</span>
+            <div className="bg-white/50 p-4 rounded-2xl rounded-bl-sm border border-dashed border-sky-300 max-w-[85%]">
+              <p className="text-lg leading-relaxed text-slate-500 italic">{currentSpeech}</p>
+            </div>
+          </div>
+        )}
+        {isListening && !currentSpeech && (
           <div className="flex flex-col items-start opacity-50">
             <div className="flex items-center gap-2 mb-1 ml-2">
               <span className="flex h-2 w-2 relative">
