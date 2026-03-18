@@ -4,24 +4,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: "npm"
-      - name: Install Dependencies
-        run: npm install
-      - name: Build Web
-        run: npm run build
+      - run: npm install
+      - run: npm run build
       - name: Set up JDK 17 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
-      - name: Sync Capacitor
-        run: npx cap sync
+      - run: npx cap sync
       - name: Build APK Final
         run: |
           cd android
