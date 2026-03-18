@@ -1,0 +1,8 @@
+{
+  "name": "Vanuatu Translate",
+  "description": "A powerful translation app for Vanuatu, supporting Chinese, Bislama, English, and French with offline capabilities and AR camera translation.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
