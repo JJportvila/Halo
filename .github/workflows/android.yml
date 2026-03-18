@@ -1,5 +1,7 @@
 name: Build Android APK
 on: [push]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,12 +18,8 @@ jobs:
           distribution: "temurin"
           java-version: "17"
       - run: npx cap sync
-      - name: Build APK Final
+      - name: Auto-Fix Permissions and Build APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
-        with:
-          name: Halo-App-Release-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          ./gradlew assembleDebug --no-daemon --stacktrace
