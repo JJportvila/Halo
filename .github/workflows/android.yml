@@ -2,6 +2,8 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,7 +13,7 @@ jobs:
         with:
           node-version: 22
           cache: "npm"
-      - run: npm install
+      - run: npm install --no-audit --no-fund
       - run: npm run build
       - uses: actions/setup-java@v4
         with:
